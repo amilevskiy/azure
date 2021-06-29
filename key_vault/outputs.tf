@@ -1,8 +1,19 @@
 #https://www.terraform.io/docs/configuration/outputs.html
 
 ####################
-#output "linux_vm" {
-#  #################
-#  value = azurerm_linux_virtual_machine.this
-#}
+output "key_vault" {
+  ##################
+  value = azurerm_key_vault.this[0]
+}
 
+##########################
+output "access_policies" {
+  ########################
+  value = azurerm_key_vault_access_policy.this
+}
+
+#######################
+output "certificates" {
+  #####################
+  value = azurerm_key_vault_certificate.this
+}
