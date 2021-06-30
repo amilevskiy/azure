@@ -163,7 +163,7 @@ resource "azurerm_application_gateway" "this" {
   dynamic "identity" {
     for_each = lookup(var.application_gateway, "identity", null) == null ? [] : [var.application_gateway.identity]
     content {
-      type         = identity.value.type
+      type         = lookup(identity.value, "type", null) != null ? identity.value.type : "UserAssigned"
       identity_ids = lookup(identity.value, "identity_ids", null)
     }
   }

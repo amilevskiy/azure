@@ -3,17 +3,17 @@
 ####################
 output "key_vault" {
   ##################
-  value = azurerm_key_vault.this[0]
+  value = try(azurerm_key_vault.this[0], null)
 }
 
 ##########################
 output "access_policies" {
   ########################
-  value = azurerm_key_vault_access_policy.this
+  value = try(azurerm_key_vault_access_policy.this, null)
 }
 
 #######################
 output "certificates" {
   #####################
-  value = azurerm_key_vault_certificate.this
+  value = try(azurerm_key_vault_certificate.this, null)
 }

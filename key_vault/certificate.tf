@@ -85,7 +85,7 @@ resource "azurerm_key_vault_certificate" "this" {
 
     key_properties {
       curve      = can(each.value.certificate_policy.key_properties.curve) ? each.value.certificate_policy.key_properties.curve : null
-      exportable = try(each.value.certificate_policy.key_properties.exportable, false)
+      exportable = try(each.value.certificate_policy.key_properties.exportable, true)
       key_size   = try(each.value.certificate_policy.key_properties.key_size, 2048)
       key_type   = try(each.value.certificate_policy.key_properties.key_type, "RSA")
       reuse_key  = try(each.value.certificate_policy.key_properties.reuse_key, false)

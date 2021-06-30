@@ -27,12 +27,12 @@ variable "key_vault" {
       phone = optional(string)
     })))
 
-    network_acls = optional(list(object({
+    network_acls = optional(object({
       bypass                     = optional(string)
       default_action             = optional(string)
-      ip_rules                   = optional(string)
+      ip_rules                   = optional(list(string))
       virtual_network_subnet_ids = optional(list(string))
-    })))
+    }))
 
     timeouts = optional(object({
       create = optional(string)

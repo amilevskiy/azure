@@ -29,7 +29,11 @@ resource "azurerm_key_vault_access_policy" "this" {
   key_vault_id = azurerm_key_vault.this[0].id
   tenant_id    = local.tenant_id
 
-  object_id = coalesce(each.key, join("", data.azurerm_client_config.this.*.object_id))
+  object_id = lookup(
+    each.value, "object_id", null
+    ) != null ? each.value.object_id : coalesce(
+    each.key, join("", data.azurerm_client_config.this.*.object_id)
+  )
 
   #more reliable tnan try(each.value.application_id, null)
   application_id = lookup(each.value, "application_id", null)
