@@ -155,12 +155,17 @@ resource "azurerm_windows_virtual_machine" "this" {
   provision_vm_agent           = lookup(var.windows_vm, "provision_vm_agent", null)
   proximity_placement_group_id = lookup(var.windows_vm, "proximity_placement_group_id", null)
 
-
   dynamic "secret" {
     for_each = lookup(var.windows_vm, "secret", null) == null ? [] : var.windows_vm.secret
     content {
-      certificate  = secret.value.certificate
       key_vault_id = secret.value.key_vault_id
+      dynamic "certificate" {
+        for_each = secret.value.certificate != null ? [secret.value.certificate] : []
+        content {
+          store = certificate.value.store
+          url   = certificate.value.url
+        }
+      }
     }
   }
 

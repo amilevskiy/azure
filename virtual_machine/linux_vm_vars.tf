@@ -49,8 +49,10 @@ variable "linux_vm" {
     }))
 
     secret = optional(list(object({
-      certificate  = string
       key_vault_id = string
+      certificate = object({
+        url = string
+      })
     })))
 
     size                         = optional(string) # https://docs.microsoft.com/en-us/azure/virtual-machines/linux/compute-benchmark-scores

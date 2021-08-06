@@ -64,8 +64,11 @@ variable "windows_vm" {
     proximity_placement_group_id = optional(string)
 
     secret = optional(list(object({
-      certificate  = string
       key_vault_id = string
+      certificate = object({
+        store = string
+        url   = string
+      })
     })))
 
     source_image_id = optional(string)

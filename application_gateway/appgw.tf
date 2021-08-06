@@ -64,7 +64,7 @@ resource "azurerm_application_gateway" "this" {
               "authentication_certificate"
           ]))
 
-          data = authentication_certificate.value.data
+          # data = authentication_certificate.value.data
         }
       }
 

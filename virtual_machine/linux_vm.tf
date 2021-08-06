@@ -168,8 +168,13 @@ resource "azurerm_linux_virtual_machine" "this" {
   dynamic "secret" {
     for_each = lookup(var.linux_vm, "secret", null) == null ? [] : var.linux_vm.secret
     content {
-      certificate  = secret.value.certificate
       key_vault_id = secret.value.key_vault_id
+      dynamic "certificate" {
+        for_each = secret.value.certificate != null ? [secret.value.certificate] : []
+        content {
+          url = certificate.value.url
+        }
+      }
     }
   }
 
