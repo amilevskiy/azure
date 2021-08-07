@@ -1,6 +1,6 @@
 locals {
-  linux_vm_name = var.linux_vm != null ? lookup(
-    var.linux_vm, "name", null
+  linux_vm_name = var.linux_vm != null ? (
+    var.linux_vm.name
     ) != null ? var.linux_vm.name : join(module.const.delimiter, compact([
       module.const.az_prefix,
       var.env,
@@ -13,43 +13,22 @@ locals {
     module.const.root_ebs_suffix
   ]))
 
-  #terraform 1.0.0, azurerm 2.64.0 - Error: "admin_username": required field is not set
-  #admin_username = try(var.linux_vm.admin_username, "admin", "no")
-
-  #ok not for list
-  # admin_username = lookup(
-  #   var.linux_vm, "admin_username", null
-  #   ) != null ? var.linux_vm.admin_username : lookup(
-  #   var.linux_vm, "admin_ssh_key", null
-  #   ) != null ? lookup(
-  #   var.linux_vm.admin_ssh_key, "username", null
-  # ) != null ? var.linux_vm.admin_ssh_key.username : null : null
-
-  #ok
-  # admin_username = lookup(
-  #   var.linux_vm, "admin_username", null
-  #   ) != null ? var.linux_vm.admin_username : lookup(
-  #   var.linux_vm, "admin_ssh_key", null
-  #   ) != null ? (length(var.linux_vm.admin_ssh_key) > 0 ?
-  #   lookup(var.linux_vm.admin_ssh_key.0, "username", null
-  # ) != null ? var.linux_vm.admin_ssh_key.0.username : null : null) : null
-
-  admin_username = var.linux_vm != null ? lookup(
-    var.linux_vm, "admin_username", null
-    ) != null ? var.linux_vm.admin_username : lookup(
-    var.linux_vm, "admin_ssh_key", null
-    ) != null ? (length(var.linux_vm.admin_ssh_key) > 0 ? lookup(
-      var.linux_vm.admin_ssh_key.0, "username", null
+  admin_username = var.linux_vm != null ? (
+    var.linux_vm.admin_username
+    ) != null ? var.linux_vm.admin_username : (
+    var.linux_vm.admin_ssh_key
+    ) != null ? (length(var.linux_vm.admin_ssh_key) > 0 ? (
+      var.linux_vm.admin_ssh_key.0.username
   ) != null ? var.linux_vm.admin_ssh_key.0.username : null : null) : null : null
 
-  admin_password = var.linux_vm != null ? lookup(
-    var.linux_vm, "admin_password", null
-    ) == null ? null : lookup(
-    var.linux_vm, "admin_ssh_key", null
+  admin_password = var.linux_vm != null ? (
+    var.linux_vm.admin_password
+    ) == null ? null : (
+    var.linux_vm.admin_ssh_key
     ) == null ? var.linux_vm.admin_password : length(
     var.linux_vm.admin_ssh_key
-    ) > 0 ? lookup(
-    var.linux_vm.admin_ssh_key.0, "public_key", null
+    ) > 0 ? (
+    var.linux_vm.admin_ssh_key.0.public_key
   ) != null ? null : var.linux_vm.admin_password : var.linux_vm.admin_password : null
 }
 
@@ -64,50 +43,45 @@ resource "azurerm_linux_virtual_machine" "this" {
   resource_group_name = var.resource_group_name
 
   network_interface_ids = azurerm_network_interface.this.*.id
-  #try(var.linux_vm.size, "Standard_B1ls") >>> Error: "size": required field is not set
-  size = lookup(var.linux_vm, "size", null) != null ? var.linux_vm.size : "Standard_B1ls"
+  size                  = var.linux_vm.size != null ? var.linux_vm.size : "Standard_B1ls"
 
+  #avoid `dynamic "os_disk" {}` to allow not pass `os_disk = {}` at all
   os_disk {
-    caching = lookup(
-      var.linux_vm, "os_disk", null
-      ) != null ? lookup(
-      var.linux_vm.os_disk, "caching", null
-    ) != null ? var.linux_vm.os_disk.caching : "ReadWrite" : "ReadWrite"
+    caching = (var.linux_vm.os_disk != null
+      ? var.linux_vm.os_disk.caching != null
+      ? var.linux_vm.os_disk.caching
+      : "ReadWrite" : "ReadWrite"
+    )
 
-    #DANGEROUS: storage_account_type = lookup(var.linux_vm, "os_disk", null) != null ? lookup(var.linux_vm.os_disk, "storage_account_type", "Standard_LRS") : "Standard_LRS"
-    storage_account_type = lookup(
-      var.linux_vm, "os_disk", null
-      ) != null ? lookup(
-      var.linux_vm.os_disk, "storage_account_type", null
-    ) != null ? var.linux_vm.os_disk.storage_account_type : "Standard_LRS" : "Standard_LRS"
+    storage_account_type = (var.linux_vm.os_disk != null
+      ? var.linux_vm.os_disk.storage_account_type != null
+      ? var.linux_vm.os_disk.storage_account_type
+      : "Standard_LRS" : "Standard_LRS"
+    )
 
-    name = lookup(
-      var.linux_vm, "os_disk", null
-      ) != null ? lookup(
-      var.linux_vm.os_disk, "name", local.linux_vm_os_disk_name
-    ) : local.linux_vm_os_disk_name
+    name = (var.linux_vm.os_disk != null
+      ? var.linux_vm.os_disk.name != null
+      ? var.linux_vm.os_disk.name
+      : local.linux_vm_os_disk_name : local.linux_vm_os_disk_name
+    )
 
-    disk_encryption_set_id = lookup(
-      var.linux_vm, "os_disk", null
-      ) != null ? lookup(
-      var.linux_vm.os_disk, "disk_encryption_set_id", null
-    ) : null
+    disk_encryption_set_id = (var.linux_vm.os_disk != null
+      ? var.linux_vm.os_disk.disk_encryption_set_id
+    : null)
 
-    disk_size_gb = lookup(
-      var.linux_vm, "os_disk", null
-      ) != null ? lookup(
-      var.linux_vm.os_disk, "disk_size_gb", null
-    ) : null
+    disk_size_gb = (var.linux_vm.os_disk != null
+      ? var.linux_vm.os_disk.disk_size_gb
+    : null)
 
-    write_accelerator_enabled = lookup(
-      var.linux_vm, "os_disk", null
-      ) != null ? lookup(
-      var.linux_vm.os_disk, "write_accelerator_enabled", null
-    ) : null
+    write_accelerator_enabled = (var.linux_vm.os_disk != null
+      ? var.linux_vm.os_disk.write_accelerator_enabled
+    : null)
 
-    # diff_disk_settings = lookup(lookup(var.linux_vm, "os_disk", null), "diff_disk_settings", null)
     dynamic "diff_disk_settings" {
-      for_each = (lookup(var.linux_vm, "os_disk", null) != null ? lookup(var.linux_vm.os_disk, "diff_disk_settings", null) : null) == null ? [] : [var.linux_vm.os_disk.diff_disk_settings]
+      for_each = (var.linux_vm.os_disk != null
+        ? var.linux_vm.os_disk.diff_disk_settings != null
+        ? [var.linux_vm.os_disk.diff_disk_settings]
+      : [] : [])
       content {
         option = diff_disk_settings.value.option
       }
@@ -116,57 +90,56 @@ resource "azurerm_linux_virtual_machine" "this" {
 
   # Optional
   dynamic "additional_capabilities" {
-    for_each = lookup(var.linux_vm, "additional_capabilities", null) == null ? [] : [var.linux_vm.additional_capabilities]
+    for_each = var.linux_vm.additional_capabilities != null ? [var.linux_vm.additional_capabilities] : []
     content {
-      ultra_ssd_enabled = lookup(additional_capabilities.value, "ultra_ssd_enabled", null)
+      ultra_ssd_enabled = additional_capabilities.value.ultra_ssd_enabled
     }
   }
 
-  # try(var.linux_vm.admin_username, var.linux_vm.admin_ssh_key.0.username) >>> Error: "admin_username": required field is not set
   admin_username = local.admin_username
   admin_password = local.admin_password
 
-  disable_password_authentication = lookup(
-    var.linux_vm, "disable_password_authentication", null
+  disable_password_authentication = (
+    var.linux_vm.disable_password_authentication
   ) != null ? var.linux_vm.disable_password_authentication : local.admin_password == null
 
   dynamic "admin_ssh_key" {
-    for_each = lookup(var.linux_vm, "admin_ssh_key", null) == null ? [] : var.linux_vm.admin_ssh_key
+    for_each = var.linux_vm.admin_ssh_key != null ? var.linux_vm.admin_ssh_key : []
     content {
       username   = admin_ssh_key.value.username
       public_key = admin_ssh_key.value.public_key
     }
   }
 
-  allow_extension_operations = lookup(var.linux_vm, "allow_extension_operations", null)
-  availability_set_id        = lookup(var.linux_vm, "availability_set_id", null)
+  allow_extension_operations = var.linux_vm.allow_extension_operations
+  availability_set_id        = var.linux_vm.availability_set_id
 
   dynamic "boot_diagnostics" {
-    for_each = lookup(var.linux_vm, "boot_diagnostics", null) == null ? [] : [var.linux_vm.boot_diagnostics]
+    for_each = var.linux_vm.boot_diagnostics != null ? [var.linux_vm.boot_diagnostics] : []
     content {
-      storage_account_uri = lookup(boot_diagnostics.value, "storage_account_uri", null)
+      storage_account_uri = boot_diagnostics.value.storage_account_uri
     }
   }
 
-  computer_name              = lookup(var.linux_vm, "computer_name", null)
-  custom_data                = lookup(var.linux_vm, "custom_data", null)
-  dedicated_host_id          = lookup(var.linux_vm, "dedicated_host_id", null)
-  encryption_at_host_enabled = lookup(var.linux_vm, "encryption_at_host_enabled", null)
-  eviction_policy            = lookup(var.linux_vm, "eviction_policy", null)
-  extensions_time_budget     = lookup(var.linux_vm, "extensions_time_budget", null)
-  license_type               = lookup(var.linux_vm, "license_type", null)
-  max_bid_price              = lookup(var.linux_vm, "max_bid_price", null)
+  computer_name              = var.linux_vm.computer_name
+  custom_data                = var.linux_vm.custom_data
+  dedicated_host_id          = var.linux_vm.dedicated_host_id
+  encryption_at_host_enabled = var.linux_vm.encryption_at_host_enabled
+  eviction_policy            = var.linux_vm.eviction_policy
+  extensions_time_budget     = var.linux_vm.extensions_time_budget
+  license_type               = var.linux_vm.license_type
+  max_bid_price              = var.linux_vm.max_bid_price
 
   dynamic "identity" {
-    for_each = lookup(var.linux_vm, "identity", null) == null ? [] : [var.linux_vm.identity]
+    for_each = var.linux_vm.identity != null ? [var.linux_vm.identity] : []
     content {
       type         = identity.value.type
-      identity_ids = lookup(identity.value, "identity_ids", null)
+      identity_ids = identity.value.identity_ids
     }
   }
 
   dynamic "secret" {
-    for_each = lookup(var.linux_vm, "secret", null) == null ? [] : var.linux_vm.secret
+    for_each = var.linux_vm.secret != null ? var.linux_vm.secret : []
     content {
       key_vault_id = secret.value.key_vault_id
       dynamic "certificate" {
@@ -179,83 +152,65 @@ resource "azurerm_linux_virtual_machine" "this" {
   }
 
   dynamic "plan" {
-    for_each = lookup(var.linux_vm, "plan", null) == null ? [] : [var.linux_vm.plan]
+    for_each = var.linux_vm.plan != null ? [var.linux_vm.plan] : []
     content {
-      publisher = lookup(
-        plan.value, "publisher", null
-        ) != null ? plan.value.publisher : lookup(
-        var.linux_vm, "source_image_reference", null
-        ) != null ? lookup(
-        var.linux_vm.source_image_reference, "publisher", null
-      ) != null ? var.linux_vm.source_image_reference.publisher : null : null
+      publisher = (plan.value.publisher != null
+        ? plan.value.publisher
+        : var.linux_vm.source_image_reference != null
+      ? var.linux_vm.source_image_reference.publisher : null)
 
-      product = lookup(
-        plan.value, "product", null
-        ) != null ? plan.value.product : lookup(
-        var.linux_vm, "source_image_reference", null
-        ) != null ? lookup(
-        var.linux_vm.source_image_reference, "offer", null
-      ) != null ? var.linux_vm.source_image_reference.offer : null : null
+      product = (plan.value.product != null
+        ? plan.value.product
+        : var.linux_vm.source_image_reference != null
+      ? var.linux_vm.source_image_reference.offer : null)
 
-      name = lookup(
-        plan.value, "name", null
-        ) != null ? plan.value.name : lookup(
-        var.linux_vm, "source_image_reference", null
-        ) != null ? lookup(
-        var.linux_vm.source_image_reference, "sku", null
-      ) != null ? var.linux_vm.source_image_reference.sku : null : null
+      name = (plan.value.name != null
+        ? plan.value.name
+        : var.linux_vm.source_image_reference != null
+      ? var.linux_vm.source_image_reference.sku : null)
     }
   }
 
   dynamic "source_image_reference" {
-    for_each = lookup(var.linux_vm, "source_image_reference", null) == null ? [] : [var.linux_vm.source_image_reference]
+    for_each = var.linux_vm.source_image_reference != null ? [var.linux_vm.source_image_reference] : []
     content {
-      publisher = lookup(
-        source_image_reference.value, "publisher", null
-        ) != null ? source_image_reference.value.publisher : lookup(
-        var.linux_vm, "plan", null
-        ) != null ? lookup(
-        var.linux_vm.plan, "publisher", null
-      ) != null ? var.linux_vm.plan.publisher : null : null
+      publisher = (source_image_reference.value.publisher != null
+        ? source_image_reference.value.publisher
+        : var.linux_vm.plan != null
+      ? var.linux_vm.plan.publisher : null)
 
-      offer = lookup(
-        source_image_reference.value, "offer", null
-        ) != null ? source_image_reference.value.offer : lookup(
-        var.linux_vm, "plan", null
-        ) != null ? lookup(
-        var.linux_vm.plan, "product", null
-      ) != null ? var.linux_vm.plan.product : null : null
+      offer = (source_image_reference.value.offer != null
+        ? source_image_reference.value.offer
+        : var.linux_vm.plan != null
+      ? var.linux_vm.plan.product : null)
 
-      sku = lookup(
-        source_image_reference.value, "sku", null
-        ) != null ? source_image_reference.value.sku : lookup(
-        var.linux_vm, "plan", null
-        ) != null ? lookup(
-        var.linux_vm.plan, "name", null
-      ) != null ? var.linux_vm.plan.name : null : null
+      sku = (source_image_reference.value.sku != null
+        ? source_image_reference.value.sku
+        : var.linux_vm.plan != null
+      ? var.linux_vm.plan.name : null)
 
-      version = lookup(source_image_reference.value, "version", null)
+      version = source_image_reference.value.version
     }
   }
 
-  source_image_id              = lookup(var.linux_vm, "source_image_id", null)
-  platform_fault_domain        = lookup(var.linux_vm, "platform_fault_domain", null)
-  priority                     = lookup(var.linux_vm, "priority", null)
-  provision_vm_agent           = lookup(var.linux_vm, "provision_vm_agent", null)
-  proximity_placement_group_id = lookup(var.linux_vm, "proximity_placement_group_id", null)
-  virtual_machine_scale_set_id = lookup(var.linux_vm, "virtual_machine_scale_set_id", null)
-  zone                         = lookup(var.linux_vm, "zone", null)
+  source_image_id              = var.linux_vm.source_image_id
+  platform_fault_domain        = var.linux_vm.platform_fault_domain
+  priority                     = var.linux_vm.priority
+  provision_vm_agent           = var.linux_vm.provision_vm_agent
+  proximity_placement_group_id = var.linux_vm.proximity_placement_group_id
+  virtual_machine_scale_set_id = var.linux_vm.virtual_machine_scale_set_id
+  zone                         = var.linux_vm.zone
 
   tags = merge(local.tags, {
     Name = local.linux_vm_name
   })
 
   dynamic "timeouts" {
-    for_each = lookup(var.linux_vm, "timeouts", null) == null ? [] : [var.linux_vm.timeouts]
+    for_each = var.linux_vm.timeouts != null ? [var.linux_vm.timeouts] : []
     content {
-      create = lookup(timeouts.value, "create", null)
-      update = lookup(timeouts.value, "update", null)
-      delete = lookup(timeouts.value, "delete", null)
+      create = timeouts.value.create
+      update = timeouts.value.update
+      delete = timeouts.value.delete
     }
   }
 }

@@ -15,9 +15,10 @@ variable "network_security_group" {
 
 
 locals {
-  network_security_group_name = var.network_security_group != null ? lookup(
-    var.network_security_group, "name", null
-    ) != null ? var.network_security_group.name : join(module.const.delimiter, compact([
+  network_security_group_name = var.network_security_group != null ? (
+    var.network_security_group.name
+    ) != null ? var.network_security_group.name : join(
+    module.const.delimiter, compact([
       module.const.az_prefix,
       var.env,
       var.name,
@@ -31,8 +32,8 @@ locals {
   #   ) != null ? distinct(compact([
   #     for k, v in var.application_gateway.gateway_ip_configuration : v.subnet_id
   # ])) : [] : []
-  association_count = local.enable_network_security_group > 0 ? lookup(
-    var.application_gateway, "gateway_ip_configuration", null
+  association_count = local.enable_network_security_group > 0 ? (
+    var.application_gateway.gateway_ip_configuration
   ) != null ? length(var.application_gateway.gateway_ip_configuration) : 0 : 0
 }
 
@@ -65,12 +66,12 @@ resource "azurerm_network_security_group" "this" {
   })
 
   dynamic "timeouts" {
-    for_each = lookup(var.network_security_group, "timeouts", null) == null ? [] : [var.network_security_group.timeouts]
+    for_each = var.network_security_group.timeouts != null ? [var.network_security_group.timeouts] : []
     content {
-      create = lookup(timeouts.value, "create", null)
-      update = lookup(timeouts.value, "update", null)
-      read   = lookup(timeouts.value, "read", null)
-      delete = lookup(timeouts.value, "delete", null)
+      create = timeouts.value.create
+      update = timeouts.value.update
+      read   = timeouts.value.read
+      delete = timeouts.value.delete
     }
   }
 }

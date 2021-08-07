@@ -1,12 +1,13 @@
 locals {
-  windows_vm_name = var.windows_vm != null ? lookup(
-    var.windows_vm, "name", null
-    ) != null ? var.windows_vm.name : join(module.const.delimiter, compact([
+  windows_vm_name = (var.windows_vm != null
+    ? var.windows_vm.name != null
+    ? var.windows_vm.name
+    : join(module.const.delimiter, compact([
       module.const.az_prefix,
       var.env,
       var.name,
       module.const.instance_suffix
-  ])) : null
+  ])) : null)
 
   windows_vm_os_disk_name = join(module.const.delimiter, compact([
     local.windows_vm_name,
@@ -24,51 +25,48 @@ resource "azurerm_windows_virtual_machine" "this" {
   location            = var.location
   resource_group_name = var.resource_group_name
 
-  admin_username = lookup(var.windows_vm, "admin_username", null)
-  admin_password = lookup(var.windows_vm, "admin_password", null)
+  admin_username = var.windows_vm.admin_username
+  admin_password = var.windows_vm.admin_password
 
   network_interface_ids = azurerm_network_interface.this.*.id
-  size                  = lookup(var.windows_vm, "size", null) != null ? var.windows_vm.size : "Standard_B1ls"
+  size                  = var.windows_vm.size != null ? var.windows_vm.size : "Standard_B1ls"
 
   os_disk {
-    caching = lookup(
-      var.windows_vm, "os_disk", null
-      ) != null ? lookup(
-      var.windows_vm.os_disk, "caching", null
-    ) != null ? var.windows_vm.os_disk.caching : "ReadWrite" : "ReadWrite"
+    caching = (var.windows_vm.os_disk != null
+      ? var.windows_vm.os_disk.caching != null
+      ? var.windows_vm.os_disk.caching
+      : "ReadWrite" : "ReadWrite"
+    )
 
-    storage_account_type = lookup(
-      var.windows_vm, "os_disk", null
-      ) != null ? lookup(
-      var.windows_vm.os_disk, "storage_account_type", null
-    ) != null ? var.windows_vm.os_disk.storage_account_type : "Standard_LRS" : "Standard_LRS"
+    storage_account_type = (var.windows_vm.os_disk != null
+      ? var.windows_vm.os_disk.storage_account_type != null
+      ? var.windows_vm.os_disk.storage_account_type
+      : "Standard_LRS" : "Standard_LRS"
+    )
 
-    name = lookup(
-      var.windows_vm, "os_disk", null
-      ) != null ? lookup(
-      var.windows_vm.os_disk, "name", local.windows_vm_os_disk_name
-    ) : local.windows_vm_os_disk_name
+    name = (var.windows_vm.os_disk != null
+      ? var.windows_vm.os_disk.name != null
+      ? var.windows_vm.os_disk.name
+      : local.windows_vm_os_disk_name : local.windows_vm_os_disk_name
+    )
 
-    disk_encryption_set_id = lookup(
-      var.windows_vm, "os_disk", null
-      ) != null ? lookup(
-      var.windows_vm.os_disk, "disk_encryption_set_id", null
-    ) : null
+    disk_encryption_set_id = (var.windows_vm.os_disk != null
+      ? var.windows_vm.os_disk.disk_encryption_set_id
+    : null)
 
-    disk_size_gb = lookup(
-      var.windows_vm, "os_disk", null
-      ) != null ? lookup(
-      var.windows_vm.os_disk, "disk_size_gb", null
-    ) : null
+    disk_size_gb = (var.windows_vm.os_disk != null
+      ? var.windows_vm.os_disk.disk_size_gb
+    : null)
 
-    write_accelerator_enabled = lookup(
-      var.windows_vm, "os_disk", null
-      ) != null ? lookup(
-      var.windows_vm.os_disk, "write_accelerator_enabled", null
-    ) : null
+    write_accelerator_enabled = (var.windows_vm.os_disk != null
+      ? var.windows_vm.os_disk.write_accelerator_enabled
+    : null)
 
     dynamic "diff_disk_settings" {
-      for_each = (lookup(var.windows_vm, "os_disk", null) != null ? lookup(var.windows_vm.os_disk, "diff_disk_settings", null) : null) == null ? [] : [var.windows_vm.os_disk.diff_disk_settings]
+      for_each = (var.windows_vm.os_disk != null
+        ? var.windows_vm.os_disk.diff_disk_settings != null
+        ? [var.windows_vm.os_disk.diff_disk_settings]
+      : [] : [])
       content {
         option = diff_disk_settings.value.option
       }
@@ -77,9 +75,9 @@ resource "azurerm_windows_virtual_machine" "this" {
 
   # Optional
   dynamic "additional_capabilities" {
-    for_each = lookup(var.windows_vm, "additional_capabilities", null) == null ? [] : [var.windows_vm.additional_capabilities]
+    for_each = var.windows_vm.additional_capabilities != null ? [var.windows_vm.additional_capabilities] : []
     content {
-      ultra_ssd_enabled = lookup(additional_capabilities.value, "ultra_ssd_enabled", null)
+      ultra_ssd_enabled = additional_capabilities.value.ultra_ssd_enabled
     }
   }
 

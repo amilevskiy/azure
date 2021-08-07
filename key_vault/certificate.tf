@@ -70,35 +70,30 @@ resource "azurerm_key_vault_certificate" "this" {
   key_vault_id = azurerm_key_vault.this[0].id
 
   dynamic "certificate" {
-    for_each = lookup(each.value, "certificate", null) == null ? [] : [each.value.certificate]
+    for_each = each.value.certificate != null ? [each.value.certificate] : []
     content {
       contents = certificate.value.contents
-      password = lookup(certificate.value, "password", null)
+      password = certificate.value.password
     }
   }
 
   certificate_policy {
     issuer_parameters {
-      # name = lookup(each.value.certificate_policy.issuer_parameters, "name", null) != null ? each.value.certificate_policy.issuer_parameters.name : "Unknown"
-      name = try(each.value.certificate_policy.issuer_parameters.name, "Unknown")
+      name = each.value.certificate_policy.issuer_parameters.name != null ? each.value.certificate_policy.issuer_parameters.name : "Unknown"
     }
 
     key_properties {
-      curve      = can(each.value.certificate_policy.key_properties.curve) ? each.value.certificate_policy.key_properties.curve : null
-      exportable = try(each.value.certificate_policy.key_properties.exportable, true)
-      key_size   = try(each.value.certificate_policy.key_properties.key_size, 2048)
-      key_type   = try(each.value.certificate_policy.key_properties.key_type, "RSA")
-      reuse_key  = try(each.value.certificate_policy.key_properties.reuse_key, false)
+      curve      = each.value.certificate_policy.key_properties.curve
+      exportable = each.value.certificate_policy.key_properties.exportable != null ? each.value.certificate_policy.key_properties.exportable : true
+      key_size   = each.value.certificate_policy.key_properties.key_size != null ? each.value.certificate_policy.key_properties.key_size : 2048
+      key_type   = each.value.certificate_policy.key_properties.key_type != null ? each.value.certificate_policy.key_properties.key_type : "RSA"
+      reuse_key  = each.value.certificate_policy.key_properties.reuse_key != null ? each.value.certificate_policy.key_properties.reuse_key : false
     }
 
     dynamic "lifetime_action" {
-      for_each = lookup(
-        each.value, "certificate_policy", null
-        ) == null ? [] : lookup(
-        each.value.certificate_policy, "lifetime_action", null
-        ) == null ? [] : [
+      for_each = each.value.certificate_policy != null ? each.value.certificate_policy.lifetime_action != null ? [
         each.value.certificate_policy.lifetime_action
-      ]
+      ] : [] : []
 
       content {
         action {
@@ -121,25 +116,21 @@ resource "azurerm_key_vault_certificate" "this" {
     }
 
     dynamic "x509_certificate_properties" {
-      for_each = lookup(
-        each.value, "certificate_policy", null
-        ) == null ? [] : lookup(
-        each.value.certificate_policy, "x509_certificate_properties", null
-        ) == null ? [] : [
+      for_each = each.value.certificate_policy != null ? each.value.certificate_policy.x509_certificate_properties != null ? [
         each.value.certificate_policy.x509_certificate_properties
-      ]
+      ] : [] : []
 
       content {
-        extended_key_usage = lookup(x509_certificate_properties.value, "extended_key_usage", null)
+        extended_key_usage = x509_certificate_properties.value.extended_key_usage
         key_usage          = x509_certificate_properties.value.key_usage
         subject            = x509_certificate_properties.value.subject
 
         dynamic "subject_alternative_names" {
-          for_each = lookup(x509_certificate_properties.value, "subject_alternative_names", null) == null ? [] : [x509_certificate_properties.value.subject_alternative_names]
+          for_each = x509_certificate_properties.value.subject_alternative_names != null ? [x509_certificate_properties.value.subject_alternative_names] : []
           content {
-            emails    = lookup(subject_alternative_names.value, "emails", null)
-            dns_names = lookup(subject_alternative_names.value, "dns_names", null)
-            upns      = lookup(subject_alternative_names.value, "upns", null)
+            emails    = subject_alternative_names.value.emails
+            dns_names = subject_alternative_names.value.dns_names
+            upns      = subject_alternative_names.value.upns
           }
         }
 
@@ -153,11 +144,11 @@ resource "azurerm_key_vault_certificate" "this" {
   })
 
   dynamic "timeouts" {
-    for_each = lookup(each.value, "timeouts", null) == null ? [] : [each.value.timeouts]
+    for_each = each.value.timeouts != null ? [each.value.timeouts] : []
     content {
-      create = lookup(timeouts.value, "create", null)
-      read   = lookup(timeouts.value, "read", null)
-      delete = lookup(timeouts.value, "delete", null)
+      create = timeouts.value.create
+      read   = timeouts.value.read
+      delete = timeouts.value.delete
     }
   }
 

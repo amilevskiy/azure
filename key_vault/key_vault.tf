@@ -43,8 +43,8 @@ variable "key_vault" {
   })
 
   validation {
-    condition = var.key_vault != null ? lookup(
-      var.key_vault, "sku_name", null
+    condition = var.key_vault != null ? (
+      var.key_vault.sku_name
       ) != null ? can(regex(
         "^(?i)(Standard|Premium)$",
         var.key_vault.sku_name
@@ -54,8 +54,8 @@ variable "key_vault" {
   }
 
   validation {
-    condition = var.key_vault != null ? lookup(
-      var.key_vault, "soft_delete_retention_days", null
+    condition = var.key_vault != null ? (
+      var.key_vault.soft_delete_retention_days
       ) != null ? (
       7 <= var.key_vault.soft_delete_retention_days && var.key_vault.soft_delete_retention_days <= 90
     ) : true : true
@@ -64,8 +64,8 @@ variable "key_vault" {
   }
 
   validation {
-    condition = var.key_vault != null ? lookup(
-      var.key_vault, "name", null
+    condition = var.key_vault != null ? (
+      var.key_vault.name
       ) != null ? can(regex(
         "^[-a-zA-Z0-9]{3,24}$",
         var.key_vault.name
@@ -84,8 +84,8 @@ locals {
     [""]
   ), 0)
 
-  key_vault_name = var.key_vault != null ? lookup(
-    var.key_vault, "name", null
+  key_vault_name = var.key_vault != null ? (
+    var.key_vault.name
     ) != null ? var.key_vault.name : join(module.const.delimiter, compact([
       module.const.az_prefix,
       var.env,
@@ -105,44 +105,44 @@ resource "azurerm_key_vault" "this" {
 
   tenant_id = local.tenant_id
 
-  sku_name = lookup(var.key_vault, "sku_name", null) != null ? lower(var.key_vault.sku_name) : "standard"
+  sku_name = var.key_vault.sku_name != null ? lower(var.key_vault.sku_name) : "standard"
 
-  enabled_for_deployment          = lookup(var.key_vault, "enabled_for_deployment", null)
-  enabled_for_disk_encryption     = lookup(var.key_vault, "enabled_for_disk_encryption", null)
-  enabled_for_template_deployment = lookup(var.key_vault, "enabled_for_template_deployment", null)
-  enable_rbac_authorization       = lookup(var.key_vault, "enable_rbac_authorization", null)
-  purge_protection_enabled        = lookup(var.key_vault, "purge_protection_enabled", null)
-  soft_delete_retention_days      = lookup(var.key_vault, "soft_delete_retention_days", null)
+  enabled_for_deployment          = var.key_vault.enabled_for_deployment
+  enabled_for_disk_encryption     = var.key_vault.enabled_for_disk_encryption
+  enabled_for_template_deployment = var.key_vault.enabled_for_template_deployment
+  enable_rbac_authorization       = var.key_vault.enable_rbac_authorization
+  purge_protection_enabled        = var.key_vault.purge_protection_enabled
+  soft_delete_retention_days      = var.key_vault.soft_delete_retention_days
 
   dynamic "access_policy" {
-    for_each = lookup(var.key_vault, "access_policy", null) == null ? [] : var.key_vault.access_policy
+    for_each = var.key_vault.access_policy != null ? var.key_vault.access_policy : []
     content {
-      tenant_id               = lookup(access_policy.value, "tenant_id", local.tenant_id)
+      tenant_id               = access_policy.value.tenant_id != null ? access_policy.value.tenant_id : local.tenant_id
       object_id               = access_policy.value.object_id
-      application_id          = lookup(access_policy.value, "application_id", null)
-      certificate_permissions = lookup(access_policy.value, "certificate_permissions", null)
-      key_permissions         = lookup(access_policy.value, "key_permissions", null)
-      secret_permissions      = lookup(access_policy.value, "secret_permissions", null)
-      storage_permissions     = lookup(access_policy.value, "storage_permissions", null)
+      application_id          = access_policy.value.application_id
+      certificate_permissions = access_policy.value.certificate_permissions
+      key_permissions         = access_policy.value.key_permissions
+      secret_permissions      = access_policy.value.secret_permissions
+      storage_permissions     = access_policy.value.storage_permissions
     }
   }
 
   dynamic "contact" {
-    for_each = lookup(var.key_vault, "contact", null) == null ? [] : var.key_vault.contact
+    for_each = var.key_vault.contact != null ? var.key_vault.contact : []
     content {
       email = contact.value.email
-      name  = lookup(contact.value, "name", null)
-      phone = lookup(contact.value, "phone", null)
+      name  = contact.value.name
+      phone = contact.value.phone
     }
   }
 
   dynamic "network_acls" {
-    for_each = lookup(var.key_vault, "network_acls", null) == null ? [] : [var.key_vault.network_acls]
+    for_each = var.key_vault.network_acls != null ? [var.key_vault.network_acls] : []
     content {
-      bypass                     = lookup(network_acls.value, "bypass", "None")
-      default_action             = lookup(network_acls.value, "default_action", "Deny")
-      ip_rules                   = lookup(network_acls.value, "ip_rules", null)
-      virtual_network_subnet_ids = lookup(network_acls.value, "value.virtual_network_subnet_ids", null)
+      bypass                     = network_acls.value.bypass != null ? network_acls.value.bypass : "None"
+      default_action             = network_acls.value.default_action != null ? network_acls.value.default_action : "Deny"
+      ip_rules                   = network_acls.value.ip_rules
+      virtual_network_subnet_ids = network_acls.value.value.virtual_network_subnet_ids
     }
   }
 
@@ -151,12 +151,12 @@ resource "azurerm_key_vault" "this" {
   })
 
   dynamic "timeouts" {
-    for_each = lookup(var.key_vault, "timeouts", null) == null ? [] : [var.key_vault.timeouts]
+    for_each = var.key_vault.timeouts != null ? [var.key_vault.timeouts] : []
     content {
-      create = lookup(timeouts.value, "create", null)
-      update = lookup(timeouts.value, "update", null)
-      read   = lookup(timeouts.value, "read", null)
-      delete = lookup(timeouts.value, "delete", null)
+      create = timeouts.value.create
+      update = timeouts.value.update
+      read   = timeouts.value.read
+      delete = timeouts.value.delete
     }
   }
 }

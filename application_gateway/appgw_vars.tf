@@ -234,7 +234,6 @@ variable "application_gateway" {
     }))
   })
 
-
   #   validation {
   #     condition = var.linux_vm != null ? lookup(
   #       var.linux_vm, "diff_disk_settings", null

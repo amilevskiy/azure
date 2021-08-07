@@ -1,5 +1,5 @@
 ################
 module "const" {
   ##############
-  source = "github.com/amilevskiy/const?ref=v0.1.2"
+  source = "github.com/amilevskiy/const?ref=v0.1.8"
 }

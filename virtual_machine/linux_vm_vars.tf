@@ -83,20 +83,21 @@ variable "linux_vm" {
 
 
   validation {
-    condition = var.linux_vm != null ? lookup(
-      var.linux_vm, "diff_disk_settings", null
-      ) != null ? lookup(
-      var.linux_vm.diff_disk_settings, "option", null
-    ) != null ? lower(var.linux_vm.diff_disk_settings.option) == "local" : true : true : true
+    condition = (var.linux_vm != null
+      ? var.linux_vm.os_disk != null
+      ? var.linux_vm.os_disk.diff_disk_settings != null
+      ? var.linux_vm.os_disk.diff_disk_settings.option != null
+      ? lower(var.linux_vm.os_disk.diff_disk_settings.option) == "local"
+    : true : true : true : true)
 
     error_message = "As of 20210621 the only supported value is \"Local\"."
   }
 
   validation {
-    condition = var.linux_vm != null ? lookup(
-      var.linux_vm, "identity", null
-      ) != null ? lookup(
-      var.linux_vm.identity, "type", null
+    condition = var.linux_vm != null ? (
+      var.linux_vm.identity
+      ) != null ? (
+      var.linux_vm.identity.type
       ) != null ? can(regex(
         "^(SystemAssigned|UserAssigned|SystemAssigned, UserAssigned)$",
         var.linux_vm.identity.type
@@ -106,8 +107,8 @@ variable "linux_vm" {
   }
 
   validation {
-    condition = var.linux_vm != null ? lookup(
-      var.linux_vm, "license_type", null
+    condition = var.linux_vm != null ? (
+      var.linux_vm.license_type
       ) != null ? can(regex(
         "^(RHEL_BYOS|SLES_BYOS)$",
         var.linux_vm.license_type
@@ -119,9 +120,9 @@ variable "linux_vm" {
   #xor!
   validation {
     condition = var.linux_vm != null ? (
-      lookup(var.linux_vm, "admin_password", null) == null && lookup(var.linux_vm, "admin_ssh_key", null) != null
+      var.linux_vm.admin_password == null && var.linux_vm.admin_ssh_key != null
       ) || (
-      lookup(var.linux_vm, "admin_password", null) != null && lookup(var.linux_vm, "admin_ssh_key", null) == null
+      var.linux_vm.admin_password != null && var.linux_vm.admin_ssh_key == null
     ) : true
 
     error_message = "As of 20210621 one of either admin_password or admin_ssh_key must be specified."
@@ -130,17 +131,17 @@ variable "linux_vm" {
   #xor!
   validation {
     condition = var.linux_vm != null ? (
-      lookup(var.linux_vm, "source_image_id", null) == null && lookup(var.linux_vm, "source_image_reference", null) != null
+      var.linux_vm.source_image_id == null && var.linux_vm.source_image_reference != null
       ) || (
-      lookup(var.linux_vm, "source_image_id", null) != null && lookup(var.linux_vm, "source_image_reference", null) == null
+      var.linux_vm.source_image_id != null && var.linux_vm.source_image_reference == null
     ) : true
 
     error_message = "As of 20210621 one of either source_image_id or source_image_reference must be set."
   }
 
   validation {
-    condition = var.linux_vm != null ? lookup(
-      var.linux_vm, "priority", null
+    condition = var.linux_vm != null ? (
+      var.linux_vm.priority
       ) != null ? can(regex(
         "^(?i)(Regular|Spot)$",
         var.linux_vm.priority
@@ -150,10 +151,10 @@ variable "linux_vm" {
   }
 
   validation {
-    condition = var.linux_vm != null ? lookup(
-      var.linux_vm, "eviction_policy", null
-      ) != null ? var.linux_vm.eviction_policy != "" ? lookup(
-      var.linux_vm, "priority", null
+    condition = var.linux_vm != null ? (
+      var.linux_vm.eviction_policy
+      ) != null ? var.linux_vm.eviction_policy != "" ? (
+      var.linux_vm.priority
       ) != null ? lower(
       var.linux_vm.priority
     ) == "spot" : false : true : true : true
@@ -162,8 +163,8 @@ variable "linux_vm" {
   }
 
   validation {
-    condition = var.linux_vm != null ? lookup(
-      var.linux_vm, "eviction_policy", null
+    condition = var.linux_vm != null ? (
+      var.linux_vm.eviction_policy
     ) != null ? lower(var.linux_vm.eviction_policy) == "deallocate" : true : true
 
     error_message = "As of 20210621 the only supported value is \"Deallocate\"."

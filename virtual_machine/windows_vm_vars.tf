@@ -98,60 +98,59 @@ variable "windows_vm" {
   })
 
   validation {
-    condition = var.windows_vm != null ? lookup(
-      var.windows_vm, "diff_disk_settings", null
-      ) != null ? lookup(
-      var.windows_vm.diff_disk_settings, "option", null
-    ) != null ? lower(var.windows_vm.diff_disk_settings.option) == "local" : true : true : true
+    condition = (var.windows_vm != null
+      ? var.windows_vm.os_disk != null
+      ? var.windows_vm.os_disk.diff_disk_settings != null
+      ? var.windows_vm.os_disk.diff_disk_settings.option != null
+      ? lower(var.windows_vm.os_disk.diff_disk_settings.option) == "local"
+    : true : true : true : true)
 
     error_message = "As of 20210621 the only supported value is \"Local\"."
   }
 
-  #?list!
+  #list - OK
   validation {
-    condition = var.windows_vm != null ? lookup(
-      var.windows_vm, "additional_unattend_content", null
-      ) != null ? lookup(
-      var.windows_vm.additional_unattend_content, "setting", null
-      ) != null ? can(regex(
+    condition = (var.windows_vm != null
+      ? var.windows_vm.additional_unattend_content != null
+      ? alltrue([for v in var.windows_vm.additional_unattend_content : can(regex(
         "^(AutoLogon|FirstLogonCommands)$",
-        var.windows_vm.additional_unattend_content.setting
-    )) : true : true : true
+        v.setting,
+      )) if v.setting != null])
+    : true : true)
 
     error_message = "As of 20210621 the only possible values are \"AutoLogon\", \"FirstLogonCommands\"."
   }
 
   validation {
-    condition = var.windows_vm != null ? lookup(
-      var.windows_vm, "identity", null
-      ) != null ? lookup(
-      var.windows_vm.identity, "type", null
-      ) != null ? can(regex(
+    condition = (var.windows_vm != null
+      ? var.windows_vm.identity != null
+      ? var.windows_vm.identity.type != null
+      ? can(regex(
         "^(SystemAssigned|UserAssigned|SystemAssigned, UserAssigned)$",
         var.windows_vm.identity.type
-    )) : true : true : true
+    )) : true : true : true)
 
     error_message = "As of 20210621 the only possible values are \"SystemAssigned\", \"UserAssigned\" and \"SystemAssigned, UserAssigned\"."
   }
 
   validation {
-    condition = var.windows_vm != null ? lookup(
-      var.windows_vm, "license_type", null
-      ) != null ? can(regex(
+    condition = (var.windows_vm != null
+      ? var.windows_vm.license_type != null
+      ? can(regex(
         "^(None|Windows_Client|Windows_Server)$",
         var.windows_vm.license_type
-    )) : true : true
+    )) : true : true)
 
     error_message = "As of 20210621 the only possible values are \"None\", \"Windows_Client\" and \"Windows_Server\"."
   }
 
   validation {
-    condition = var.windows_vm != null ? lookup(
-      var.windows_vm, "patch_mode", null
-      ) != null ? can(regex(
+    condition = (var.windows_vm != null
+      ? var.windows_vm.patch_mode != null
+      ? can(regex(
         "^(Manual|AutomaticByOS|AutomaticByPlatform)$",
         var.windows_vm.patch_mode
-    )) : true : true
+    )) : true : true)
 
     error_message = "As of 20210621 the only possible values are \"Manual\", \"AutomaticByOS\" and AutomaticByPlatform\"."
   }
@@ -159,69 +158,66 @@ variable "windows_vm" {
   #xor!
   validation {
     condition = var.windows_vm != null ? (
-      lookup(var.windows_vm, "source_image_id", null) == null && lookup(var.windows_vm, "source_image_reference", null) != null
+      var.windows_vm.source_image_id == null && var.windows_vm.source_image_reference != null
       ) || (
-      lookup(var.windows_vm, "source_image_id", null) != null && lookup(var.windows_vm, "source_image_reference", null) == null
+      var.windows_vm.source_image_id != null && var.windows_vm.source_image_reference == null
     ) : true
 
     error_message = "As of 20210621 one of either source_image_id or source_image_reference must be set."
   }
 
   validation {
-    condition = var.windows_vm != null ? lookup(
-      var.windows_vm, "priority", null
-      ) != null ? can(regex(
+    condition = (var.windows_vm != null
+      ? var.windows_vm.priority != null
+      ? can(regex(
         "^(?i)(Regular|Spot)$",
         var.windows_vm.priority
-    )) : true : true
+    )) : true : true)
 
     error_message = "As of 20210621 the only possible values are \"Regular\" and \"Spot\"."
   }
 
   validation {
-    condition = var.windows_vm != null ? lookup(
-      var.windows_vm, "eviction_policy", null
-      ) != null ? var.windows_vm.eviction_policy != "" ? lookup(
-      var.windows_vm, "priority", null
-      ) != null ? lower(
-      var.windows_vm.priority
-    ) == "spot" : false : true : true : true
+    condition = (var.windows_vm != null
+      ? var.windows_vm.eviction_policy != null
+      ? var.windows_vm.eviction_policy != ""
+      ? var.windows_vm.priority != null
+      ? lower(var.windows_vm.priority) == "spot"
+    : false : true : true : true)
 
     error_message = "As of 20210621 eviction_policy can only be configured when priority is set to \"Spot\"."
   }
 
   validation {
-    condition = var.windows_vm != null ? lookup(
-      var.windows_vm, "eviction_policy", null
-    ) != null ? lower(var.windows_vm.eviction_policy) == "deallocate" : true : true
+    condition = (var.windows_vm != null
+      ? var.windows_vm.eviction_policy != null
+      ? lower(var.windows_vm.eviction_policy) == "deallocate"
+    : true : true)
 
     error_message = "As of 20210621 the only supported value is \"Deallocate\"."
   }
 
   validation {
-    condition = var.windows_vm != null ? lookup(
-      var.windows_vm, "winrm_listener", null
-      ) != null ? lookup(
-      var.windows_vm.winrm_listener, "protocol", null
-      ) != null ? can(regex(
+    condition = (var.windows_vm != null
+      ? var.windows_vm.winrm_listener != null
+      ? var.windows_vm.winrm_listener.protocol != null
+      ? can(regex(
         "^(Http|Https)$",
         var.windows_vm.winrm_listener.protocol
-    )) : true : true : true
+    )) : true : true : true)
 
     error_message = "As of 20210621 the only possible values are \"Http\" and \"Https\"."
   }
 
   #стал list! -> distinct([for])==[true]?
   validation {
-    condition = var.windows_vm != null ? lookup(
-      var.windows_vm, "winrm_listener", null
-      ) != null ? lookup(
-      var.windows_vm.winrm_listener, "protocol", null
-      ) != null ? lower(
-      var.windows_vm.winrm_listener.protocol
-      ) == "https" ? lookup(
-      var.windows_vm.winrm_listener, "certificate_url", null
-    ) != null ? var.windows_vm.winrm_listener.certificate_url != "" : false : true : true : true : true
+    condition = (var.windows_vm != null
+      ? var.windows_vm.winrm_listener != null
+      ? var.windows_vm.winrm_listener.protocol != null
+      ? lower(var.windows_vm.winrm_listener.protocol) == "https"
+      ? var.windows_vm.winrm_listener.certificate_url != null
+      ? var.windows_vm.winrm_listener.certificate_url != ""
+    : false : true : true : true : true)
 
     error_message = "As of 20210621 certificate_url must be specified when protocol is set to \"Https\"."
   }

@@ -22,8 +22,8 @@ variable "public_ip" {
   })
 
   validation {
-    condition = var.public_ip != null ? lookup(
-      var.public_ip, "sku", null
+    condition = var.public_ip != null ? (
+      var.public_ip.sku
       ) != null ? can(regex(
         "^(?i)(Basic|Standard)$",
         var.public_ip.sku
@@ -33,8 +33,8 @@ variable "public_ip" {
   }
 
   validation {
-    condition = var.public_ip != null ? lookup(
-      var.public_ip, "allocation_method", null
+    condition = var.public_ip != null ? (
+      var.public_ip.allocation_method
       ) != null ? can(regex(
         "^(?i)(Dynamic|Static)$",
         var.public_ip.allocation_method
@@ -44,8 +44,8 @@ variable "public_ip" {
   }
 
   validation {
-    condition = var.public_ip != null ? lookup(
-      var.public_ip, "availability_zone", null
+    condition = var.public_ip != null ? (
+      var.public_ip.availability_zone
       ) != null ? can(regex(
         "^(?i)(Zone-Redundant|[1-3]|No-Zone)$",
         var.public_ip.availability_zone
@@ -55,8 +55,8 @@ variable "public_ip" {
   }
 
   validation {
-    condition = var.public_ip != null ? lookup(
-      var.public_ip, "ip_version", null
+    condition = var.public_ip != null ? (
+      var.public_ip.ip_version
       ) != null ? can(regex(
         "^(?i)(IPv6|IPv4)$",
         var.public_ip.ip_version
@@ -66,8 +66,8 @@ variable "public_ip" {
   }
 
   validation {
-    condition = var.public_ip != null ? lookup(
-      var.public_ip, "idle_timeout_in_minutes", null
+    condition = var.public_ip != null ? (
+      var.public_ip.idle_timeout_in_minutes
     ) != null ? 4 <= var.public_ip.idle_timeout_in_minutes && var.public_ip.idle_timeout_in_minutes <= 30 : true : true
 
     error_message = "As of 20210621 the value can be set between 4 and 30 minutes."
@@ -78,8 +78,8 @@ variable "public_ip" {
 
 
 locals {
-  public_ip_name = var.public_ip != null ? lookup(
-    var.public_ip, "name", null
+  public_ip_name = var.public_ip != null ? (
+    var.public_ip.name
     ) != null ? var.public_ip.name : join(module.const.delimiter, compact([
       module.const.az_prefix,
       var.env,
@@ -87,14 +87,14 @@ locals {
       module.const.eip_suffix
   ])) : null
 
-  sku         = lookup(var.public_ip, "sku", null)
+  sku         = var.public_ip.sku
   sku_defined = local.sku != null ? local.sku : "Basic"
 
-  ip_version         = lookup(var.public_ip, "ip_version", null)
+  ip_version         = var.public_ip.ip_version
   ip_version_defined = local.ip_version != null ? local.ip_version : ""
 
-  allocation_method = lookup(
-    var.public_ip, "allocation_method", null
+  allocation_method = (
+    var.public_ip.allocation_method
     ) != null ? var.public_ip.allocation_method : (
     lower(local.ip_version_defined) == "ipv6" ? "Dynamic" : (
       lower(local.sku_defined) == "standard" ? "Static" : "Dynamic"
@@ -114,25 +114,25 @@ resource "azurerm_public_ip" "this" {
   sku               = local.sku
   allocation_method = local.allocation_method
 
-  availability_zone       = lookup(var.public_ip, "availability_zone", null)
+  availability_zone       = var.public_ip.availability_zone
   ip_version              = local.ip_version
-  idle_timeout_in_minutes = lookup(var.public_ip, "idle_timeout_in_minutes", null)
-  domain_name_label       = lookup(var.public_ip, "domain_name_label", null)
-  reverse_fqdn            = lookup(var.public_ip, "reverse_fqdn", null)
-  public_ip_prefix_id     = lookup(var.public_ip, "public_ip_prefix_id", null)
-  ip_tags                 = lookup(var.public_ip, "ip_tags", null)
+  idle_timeout_in_minutes = var.public_ip.idle_timeout_in_minutes
+  domain_name_label       = var.public_ip.domain_name_label
+  reverse_fqdn            = var.public_ip.reverse_fqdn
+  public_ip_prefix_id     = var.public_ip.public_ip_prefix_id
+  ip_tags                 = var.public_ip.ip_tags
 
   tags = merge(local.tags, {
     Name = local.public_ip_name
   })
 
   dynamic "timeouts" {
-    for_each = lookup(var.public_ip, "timeouts", null) == null ? [] : [var.public_ip.timeouts]
+    for_each = var.public_ip.timeouts != null ? [var.public_ip.timeouts] : []
     content {
-      create = lookup(timeouts.value, "create", null)
-      update = lookup(timeouts.value, "update", null)
-      read   = lookup(timeouts.value, "read", null)
-      delete = lookup(timeouts.value, "delete", null)
+      create = timeouts.value.create
+      update = timeouts.value.update
+      read   = timeouts.value.read
+      delete = timeouts.value.delete
     }
   }
 }

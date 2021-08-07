@@ -38,25 +38,25 @@ resource "azurerm_virtual_machine_extension" "this" {
     azurerm_linux_virtual_machine.this.*.id, azurerm_windows_virtual_machine.this.*.id
   ), 0)
 
-  publisher                  = lookup(var.vm_extension, "publisher", null) != null ? var.vm_extension.publisher : "Microsoft.Azure.Extensions"
-  type                       = lookup(var.vm_extension, "type", null) != null ? var.vm_extension.type : "CustomScript"
-  type_handler_version       = lookup(var.vm_extension, "type_handler_version", null) != null ? var.vm_extension.type_handler_version : "2.0"
-  auto_upgrade_minor_version = lookup(var.vm_extension, "auto_upgrade_minor_version", null)
+  publisher                  = var.vm_extension.publisher != null ? var.vm_extension.publisher : "Microsoft.Azure.Extensions"
+  type                       = var.vm_extension.type != null ? var.vm_extension.type : "CustomScript"
+  type_handler_version       = var.vm_extension.type_handler_version != null ? var.vm_extension.type_handler_version : "2.0"
+  auto_upgrade_minor_version = var.vm_extension.auto_upgrade_minor_version
 
-  settings           = lookup(var.vm_extension, "settings", null)
-  protected_settings = lookup(var.vm_extension, "protected_settings", null)
+  settings           = var.vm_extension.settings
+  protected_settings = var.vm_extension.protected_settings
 
   tags = merge(local.tags, {
     Name = local.vm_extension_name
   })
 
   dynamic "timeouts" {
-    for_each = lookup(var.vm_extension, "timeouts", null) == null ? [] : [var.vm_extension.timeouts]
+    for_each = var.vm_extension.timeouts != null ? [var.vm_extension.timeouts] : []
     content {
-      create = lookup(timeouts.value, "create", null)
-      update = lookup(timeouts.value, "update", null)
-      read   = lookup(timeouts.value, "read", null)
-      delete = lookup(timeouts.value, "delete", null)
+      create = timeouts.value.create
+      update = timeouts.value.update
+      read   = timeouts.value.read
+      delete = timeouts.value.delete
     }
   }
 }
