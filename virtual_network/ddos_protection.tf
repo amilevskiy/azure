@@ -16,12 +16,13 @@ variable "ddos_protection" {
 locals {
   enable_ddos_protection = var.enable && var.ddos_protection != null ? 1 : 0
 
-  ddos_protection_name = var.ddos_protection != null ? lookup(
-    var.ddos_protection, "name", null
-    ) != null ? var.ddos_protection.name : join(module.const.delimiter, [
+  ddos_protection_name = (var.ddos_protection != null
+    ? var.ddos_protection.name != null
+    ? var.ddos_protection.name
+    : join(module.const.delimiter, [
       local.resource_group_name,
       module.const.ddos_protection_suffix
-  ]) : null
+  ]) : null)
 }
 
 
@@ -39,12 +40,12 @@ resource "azurerm_network_ddos_protection_plan" "this" {
   })
 
   dynamic "timeouts" {
-    for_each = lookup(var.ddos_protection, "timeouts", null) == null ? [] : [var.ddos_protection.timeouts]
+    for_each = var.ddos_protection.timeouts != null ? [var.ddos_protection.timeouts] : []
     content {
-      create = lookup(timeouts.value, "create", null)
-      update = lookup(timeouts.value, "update", null)
-      read   = lookup(timeouts.value, "read", null)
-      delete = lookup(timeouts.value, "delete", null)
+      create = timeouts.value.create
+      update = timeouts.value.update
+      read   = timeouts.value.read
+      delete = timeouts.value.delete
     }
   }
 

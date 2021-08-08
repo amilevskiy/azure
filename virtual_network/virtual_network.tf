@@ -40,8 +40,8 @@ resource "azurerm_virtual_network" "this" {
   name                = local.virtual_network_name
   location            = var.location
   resource_group_name = local.resource_group_name
-  address_space       = lookup(var.virtual_network, "address_space", null)
-  bgp_community       = lookup(var.virtual_network, "bgp_community", null)
+  address_space       = var.virtual_network.address_space
+  bgp_community       = var.virtual_network.bgp_community
 
   dynamic "ddos_protection_plan" {
     for_each = azurerm_network_ddos_protection_plan.this.*.id
@@ -51,19 +51,19 @@ resource "azurerm_virtual_network" "this" {
     }
   }
 
-  dns_servers = lookup(var.virtual_network, "dns_servers", null)
+  dns_servers = var.virtual_network.dns_servers
 
   tags = merge(local.tags, {
     Name = local.virtual_network_name
   })
 
   dynamic "timeouts" {
-    for_each = lookup(var.virtual_network, "timeouts", null) == null ? [] : [var.virtual_network.timeouts]
+    for_each = var.virtual_network.timeouts != null ? [var.virtual_network.timeouts] : []
     content {
-      create = lookup(timeouts.value, "create", null)
-      update = lookup(timeouts.value, "update", null)
-      read   = lookup(timeouts.value, "read", null)
-      delete = lookup(timeouts.value, "delete", null)
+      create = timeouts.value.create
+      update = timeouts.value.update
+      read   = timeouts.value.read
+      delete = timeouts.value.delete
     }
   }
 

@@ -35,14 +35,17 @@ locals {
   ) && var.resource_group != null ? 1 : 0
 
   #ok
-  resource_group_name = var.resource_group_name != null && var.resource_group_name != "" ? var.resource_group_name : var.resource_group != null ? lookup(
-    var.resource_group, "name", null
-    ) != null ? var.resource_group.name : join(module.const.delimiter, [
+  resource_group_name = (var.resource_group_name != null && var.resource_group_name != ""
+    ? var.resource_group_name
+    : var.resource_group != null
+    ? var.resource_group.name != null
+    ? var.resource_group.name
+    : join(module.const.delimiter, [
       module.const.az_prefix,
       var.env,
       var.name,
       module.const.resource_group_suffix
-  ]) : null
+  ]) : null)
 
   # Error: "name": required field is not set
   # resource_group_name = local.enable_resource_group > 0 ? lookup(
@@ -80,12 +83,12 @@ resource "azurerm_resource_group" "this" {
   })
 
   dynamic "timeouts" {
-    for_each = lookup(var.resource_group, "timeouts", null) == null ? [] : [var.resource_group.timeouts]
+    for_each = var.resource_group.timeouts != null ? [var.resource_group.timeouts] : []
     content {
-      create = lookup(timeouts.value, "create", null)
-      update = lookup(timeouts.value, "update", null)
-      read   = lookup(timeouts.value, "read", null)
-      delete = lookup(timeouts.value, "delete", null)
+      create = timeouts.value.create
+      update = timeouts.value.update
+      read   = timeouts.value.read
+      delete = timeouts.value.delete
     }
   }
 }

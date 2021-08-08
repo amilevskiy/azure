@@ -2,7 +2,7 @@ locals {
   network_security_groups = {
     for k, v in local.subnets : k => [
       for vv in v.network_security_rules : split(" ", replace(vv, "/\\s+/", " "))
-    ] if length(v.network_security_rules) > 0
+    ] if v.network_security_rules != null ? length(v.network_security_rules) > 0 : false
   }
 }
 
