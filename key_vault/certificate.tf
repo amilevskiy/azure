@@ -79,15 +79,15 @@ resource "azurerm_key_vault_certificate" "this" {
 
   certificate_policy {
     issuer_parameters {
-      name = each.value.certificate_policy.issuer_parameters.name != null ? each.value.certificate_policy.issuer_parameters.name : "Unknown"
+      name = try(each.value.certificate_policy.issuer_parameters.name, "Unknown")
     }
 
     key_properties {
-      curve      = each.value.certificate_policy.key_properties.curve
-      exportable = each.value.certificate_policy.key_properties.exportable != null ? each.value.certificate_policy.key_properties.exportable : true
-      key_size   = each.value.certificate_policy.key_properties.key_size != null ? each.value.certificate_policy.key_properties.key_size : 2048
-      key_type   = each.value.certificate_policy.key_properties.key_type != null ? each.value.certificate_policy.key_properties.key_type : "RSA"
-      reuse_key  = each.value.certificate_policy.key_properties.reuse_key != null ? each.value.certificate_policy.key_properties.reuse_key : false
+      curve      = try(each.value.certificate_policy.key_properties.curve, null)
+      exportable = try(each.value.certificate_policy.key_properties.exportable, true)
+      key_size   = try(each.value.certificate_policy.key_properties.key_size, 2048)
+      key_type   = try(each.value.certificate_policy.key_properties.key_type, "RSA")
+      reuse_key  = try(each.value.certificate_policy.key_properties.reuse_key, false)
     }
 
     dynamic "lifetime_action" {
