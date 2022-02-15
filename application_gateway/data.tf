@@ -1,4 +1,4 @@
-#https://www.terraform.io/docs/configuration/locals.html
+#https://www.terraform.io/docs/configuration/locals
 locals {
   ######
 

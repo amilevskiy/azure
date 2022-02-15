@@ -4,7 +4,7 @@ data "azurerm_client_config" "this" {
   count = var.enable && (var.tenant_id == "" || length(local.empty_policies) > 0) ? 1 : 0
 }
 
-#https://www.terraform.io/docs/configuration/locals.html
+#https://www.terraform.io/docs/configuration/locals
 locals {
   ######
 

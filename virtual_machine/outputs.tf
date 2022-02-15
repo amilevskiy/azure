@@ -1,4 +1,4 @@
-#https://www.terraform.io/docs/configuration/outputs.html
+#https://www.terraform.io/docs/configuration/outputs
 
 ###################################
 #output "managed_disk_attachment" {
